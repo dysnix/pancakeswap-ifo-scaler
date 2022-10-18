@@ -30,3 +30,4 @@ Please add [@predictkube_bot](https://t.me/predictkube_bot) to any telegram grou
 ### Docker
 
     docker build -t ifo-scaler .
+    docker run -v $HOME/.kube:/root/.kube -e TELEGRAM_TOKEN="changeme" ifo-scaler
