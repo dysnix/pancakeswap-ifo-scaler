@@ -12,10 +12,10 @@ Auto-scaler for Pancakeswap Blockchain Nodes Infrastructure.
 
 ## Config environment variables
 
-* `K8S_CONTROLLER_NAME` - Kubernetes target controller for scaling
-* `K8S_CONTROLLER_NAMESPACE` - Kubernetes namespace with controller
-* `K8S_REPLICAS_COUNT` - Replicas count for IFO period
-* `TELEGRAM_TOKEN` - **required** token for notification
+* `K8S_CONTROLLER_NAME` - Kubernetes target controller for scaling (**required**)
+* `K8S_CONTROLLER_NAMESPACE` - Kubernetes namespace with controller (**required**)
+* `K8S_REPLICAS_COUNT` - Replicas count for IFO period (**required**)
+* `TELEGRAM_TOKEN` - Token for notification (**required**)
 * `NODE_URL` - BSC JsonRPC Endpoint. Public endpoint by default
 
 ## Run
