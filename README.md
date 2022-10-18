@@ -8,6 +8,7 @@ Auto-scaler for Pancakeswap Blockchain Nodes Infrastructure.
 2. Create k8s resource [KEDA scaleobject](https://keda.sh/docs/2.7/scalers/cron/)
 3. Resize blockchain cluster by scaling pod
 4. Send notification to Telegram (by [@predictkube_bot](https://t.me/predictkube_bot))
+5. Cleanup k8s resources
 
 ## Config environment variables
 
