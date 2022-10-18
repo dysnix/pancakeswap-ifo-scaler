@@ -27,7 +27,7 @@ if __name__ == '__main__':
 
         if end_datetime <= now:
             logging.info(f"INFO {i['name']} already expired.")
-            # continue
+            continue
 
         scaledobject_name, preparing_start_datetime = k.create_scaledobjects(i['address'], i['name'], start_datetime,
                                                                              end_datetime)
