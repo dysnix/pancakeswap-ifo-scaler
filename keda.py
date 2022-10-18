@@ -15,7 +15,11 @@ class Keda:
     def __init__(self):
         self.logger = logging.getLogger('keda')
 
-        self.config = config.load_incluster_config()
+        try:
+            self.config = config.load_incluster_config()
+        except:
+            self.config = config.load_kube_config()
+
         self.k8s_client = client.ApiClient(configuration=self.config)
         self.customObjectApi = client.CustomObjectsApi(self.k8s_client)
 
