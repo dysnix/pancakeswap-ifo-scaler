@@ -12,10 +12,13 @@ Auto-scaler for Pancakeswap Blockchain Nodes Infrastructure.
 
 ## Config environment variables
 
-* `K8S_CONTROLLER_NAME` - Kubernetes target controller for scaling (**required**)
-* `K8S_CONTROLLER_NAMESPACE` - Kubernetes namespace with controller (**required**)
+
+* `TARGET_NAME` - Kubernetes target controller for scaling (**required**)
+* `TARGET_NAMESPACE` - Kubernetes namespace with controller (**required**)
 * `K8S_REPLICAS_COUNT` - Replicas count for IFO period (**required**)
 * `TELEGRAM_TOKEN` - Token for notification (**required**)
+* `TARGET_API_VERSION` - Kubernetes target controller API version (default is `apps.kruise.io/v1alpha1`)
+* `TARGET_KIND` - Kubernetes target controller Kind (default is `CloneSet`)
 * `NODE_URL` - BSC JsonRPC Endpoint. Public endpoint by default
 
 ## Run
@@ -24,6 +27,9 @@ Please add [@predictkube_bot](https://t.me/predictkube_bot) to any telegram grou
 
 ### Locally
 
+    export TARGET_NAME="changeme"
+    export TARGET_NAMESPACE="bsc"
+    export K8S_REPLICAS_COUNT="5"
     export TELEGRAM_TOKEN="changeme"
     pip install -r requirements.txt
     python main.py

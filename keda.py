@@ -5,7 +5,8 @@ from datetime import timedelta
 from kubernetes import client, config
 from kubernetes.client import ApiException
 
-from settings import K8S_REPLICAS_COUNT, HOURS_BEFORE_SCALE, K8S_CONTROLLER_NAME, K8S_CONTROLLER_NAMESPACE, TIMEZONE
+from settings import K8S_REPLICAS_COUNT, HOURS_BEFORE_SCALE, TARGET_NAME, TARGET_NAMESPACE, TIMEZONE, \
+    TARGET_API_VERSION, TARGET_KIND
 
 
 class Keda:
@@ -29,7 +30,7 @@ class Keda:
     def create_scaledobjects(self, contract_address, name, start_datetime, ifo_end_datetime,
                              replicas=K8S_REPLICAS_COUNT,
                              hours_before_scale=HOURS_BEFORE_SCALE,
-                             namespace=K8S_CONTROLLER_NAMESPACE, controller_name=K8S_CONTROLLER_NAME,
+                             namespace=TARGET_NAMESPACE, target_name=TARGET_NAME,
                              timezone=TIMEZONE):
 
         preparing_start_datetime = start_datetime - timedelta(hours=hours_before_scale)
@@ -38,7 +39,8 @@ class Keda:
 
         with open('./keda/scaledobject.yaml', 'r') as tpl:
             scaledobject_yml = tpl.read().format(contract_address=contract_address, name=scaledobject_name,
-                                                 namespace=namespace, controller_name=controller_name,
+                                                 namespace=namespace, target_name=target_name,
+                                                 target_api_version=TARGET_API_VERSION, target_kind=TARGET_KIND,
                                                  timezone=timezone,
                                                  start=self.__datetime_to_cron(preparing_start_datetime),
                                                  end=self.__datetime_to_cron(ifo_end_datetime), replicas=replicas)
@@ -57,7 +59,7 @@ class Keda:
 
         return scaledobject_name, preparing_start_datetime
 
-    def delete_scaledobjects(self, scaledobjects, namespace=K8S_CONTROLLER_NAMESPACE):
+    def delete_scaledobjects(self, scaledobjects, namespace=TARGET_NAMESPACE):
         deleted_scaledobjects = []
         scalers = self.customObjectApi.list_namespaced_custom_object(self.KEDA_API, self.KEDA_VERSION, namespace,
                                                                      'scaledobjects')
