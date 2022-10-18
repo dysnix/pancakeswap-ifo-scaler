@@ -1,0 +1,18 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {name}
+  namespace: {namespace}
+  labels:
+    app.kubernetes.io/managed-by: "predictkube"
+    ifo.predictkube.com/address: "{contract_address}"
+spec:
+  scaleTargetRef:
+    name: {controller_name}
+  triggers:
+  - type: cron
+    metadata:
+      timezone: {timezone}
+      start: {start}
+      end: {end}
+      desiredReplicas: "{replicas}"
