@@ -24,8 +24,9 @@ Please add [@predictkube_bot](https://t.me/predictkube_bot) to any telegram grou
 
 ### Locally
 
+    export TELEGRAM_TOKEN="changeme"
     pip install -r requirements.txt
-    TELEGRAM_TOKEN="changeme" python main.py
+    python main.py
 
 ### Docker
 
