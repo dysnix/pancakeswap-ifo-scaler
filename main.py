@@ -38,4 +38,4 @@ if __name__ == '__main__':
                                  f"Scaling start time: {preparing_start_datetime.strftime('%c')}")
 
     # cleanup scaleobjects
-    map(lambda s: t.broadcast_messages(f"Deprecated scaledobject {s} deleted"), k.delete_scaledobjects(scaledobjects))
+    map(lambda s: t.broadcast_messages(f"Deprecated scaledObject {s} deleted"), k.delete_scaledobjects(scaledobjects))
