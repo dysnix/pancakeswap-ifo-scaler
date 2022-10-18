@@ -27,16 +27,16 @@ if __name__ == '__main__':
 
         if end_datetime <= now:
             logging.info(f"INFO {i['name']} already expired.")
-            continue
+            # continue
 
         scaledobject_name, preparing_start_datetime = k.create_scaledobjects(i['address'], i['name'], start_datetime,
                                                                              end_datetime)
         scaledobjects.append(scaledobject_name)
 
         if preparing_start_datetime:
-            t.broadcast_messages(f":clock1: Prepared to IFO {i['name']}, address {i['address']}. "
+            t.broadcast_messages(f"Prepared to IFO {i['name']}, address {i['address']}. "
                                  f"Scaling start time: {preparing_start_datetime.strftime('%c')}")
 
     # cleanup scaleobjects
-    map(lambda s: t.broadcast_messages(f":red_circle: Deprecated scaledobject {s} deleted"),
+    map(lambda s: t.broadcast_messages(f"Deprecated scaledobject {s} deleted"),
         k.delete_scaledobjects(scaledobjects))
