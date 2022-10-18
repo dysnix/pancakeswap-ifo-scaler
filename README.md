@@ -27,9 +27,6 @@ Please add [@predictkube_bot](https://t.me/predictkube_bot) to any telegram grou
 
 ### Locally
 
-    export TARGET_NAME="changeme"
-    export TARGET_NAMESPACE="bsc"
-    export K8S_REPLICAS_COUNT="5"
     export TELEGRAM_TOKEN="changeme"
     pip install -r requirements.txt
     python main.py
