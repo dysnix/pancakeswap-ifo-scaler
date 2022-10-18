@@ -37,6 +37,7 @@ class Telegram:
         self.chat_ids = chat_ids
 
         # force save chats
+        os.makedirs(os.path.dirname(CHATS_FILE_PATH), exist_ok=True)
         with open(CHATS_FILE_PATH, 'w') as f:
             json.dump({"chat_ids": list(self.chat_ids)}, f)
 
