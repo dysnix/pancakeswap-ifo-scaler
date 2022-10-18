@@ -20,6 +20,8 @@ Auto-scaler for Pancakeswap Blockchain Nodes Infrastructure.
 
 ## Run
 
+Please add [@predictkube_bot](https://t.me/predictkube_bot) to any telegram group(s) for receive notifications.
+
 ### Locally
 
     pip install -r requirements.txt
