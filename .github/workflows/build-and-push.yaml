@@ -21,4 +21,3 @@ jobs:
           image_tag: latest, ${{ github.sha }}
           dockerfile: ./Dockerfile
           context: ./
-          target: build
