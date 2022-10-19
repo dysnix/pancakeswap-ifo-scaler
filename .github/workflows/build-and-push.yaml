@@ -8,7 +8,7 @@ on:
       - 'v[0-9]+.[0-9]+.[0-9]+-*'
 
 env:
-  DOCKER_REPO: eu.gcr.io/pancakeswap-ifo-scaler
+  DOCKER_REPO: eu.gcr.io/predictkube
 
 jobs:
   pre:
