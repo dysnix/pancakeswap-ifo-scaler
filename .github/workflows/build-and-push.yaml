@@ -1,0 +1,25 @@
+name: Push to GCR GitHub Action
+on: 
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+jobs:
+  build-and-push-to-gcr:
+    name: "Building and pushing images"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: "Building and pushing the image"
+        uses: ./
+        with:
+          gcloud_service_key: ${{ secrets.JSON_GCLOUD_SERVICE_ACCOUNT_JSON }}
+          registry: gcr.io
+          project_id: helix-dev-pancake
+          image_name: pancakeswap-ifo-scaler
+          image_tag: latest, ${{ github.sha }}
+          dockerfile: ./Dockerfile
+          context: ./
+          target: build
