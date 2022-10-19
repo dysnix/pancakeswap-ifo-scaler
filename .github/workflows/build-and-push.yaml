@@ -2,10 +2,10 @@ name: Push to GCR GitHub Action
 on: 
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      -         main
 jobs:
   build-and-push-to-gcr:
     name: "Building and pushing images"
