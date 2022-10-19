@@ -69,7 +69,7 @@ jobs:
         with:
           registry: eu.gcr.io
           username: _json_key
-          password: ${{ secrets.GCR_SA }}
+          password: ${{ secrets.PREDICTKUBE_GCR_SA }}
       -
         name: Build and push
         uses: docker/build-push-action@v2
