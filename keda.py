@@ -62,7 +62,8 @@ class Keda:
     def delete_scaledobjects(self, scaledobjects, namespace=TARGET_NAMESPACE):
         deleted_scaledobjects = []
         scalers = self.customObjectApi.list_namespaced_custom_object(self.KEDA_API, self.KEDA_VERSION, namespace,
-                                                                     'scaledobjects')
+                                                                     'scaledobjects',
+                                                                     label_selector='app.kubernetes.io/managed-by=predictkube')
 
         items = dict(scalers)['items']
         exist_scalers = [s['metadata']['name'] for s in items]
