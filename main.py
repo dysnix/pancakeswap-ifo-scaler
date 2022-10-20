@@ -19,7 +19,7 @@ if __name__ == '__main__':
     active_ifos = ifo.get_active_ifos()
 
     # create scaleobjects
-    scaledobjects = []
+    active_scaledobjects = []
     for i in active_ifos:
         start_datetime, end_datetime = ifo.get_ifo_period(i['address'])
 
@@ -31,11 +31,13 @@ if __name__ == '__main__':
 
         scaledobject_name, preparing_start_datetime = k.create_scaledobjects(i['address'], i['name'], start_datetime,
                                                                              end_datetime)
-        scaledobjects.append(scaledobject_name)
+        active_scaledobjects.append(scaledobject_name)
 
         if preparing_start_datetime:
             t.broadcast_messages(f"Prepared to IFO {i['name']}, address {i['address']}. "
                                  f"Scaling start time: {preparing_start_datetime.strftime('%c')}")
 
     # cleanup scaleobjects
-    map(lambda s: t.broadcast_messages(f"Deprecated scaledObject {s} deleted"), k.delete_scaledobjects(scaledobjects))
+    deleted_scaleobjects = k.delete_scaledobjects(active_scaledobjects)
+    for s in deleted_scaleobjects:
+        t.broadcast_messages(f"Deprecated scaledObject {s} deleted")

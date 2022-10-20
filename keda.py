@@ -57,9 +57,11 @@ class Keda:
                 self.logger.error('ScaledObject {} already can not be created: {}'.format(name, str(e)))
                 return scaledobject_name, None
 
+        self.logger.warning('ScaledObject {} created'.format(name))
+
         return scaledobject_name, preparing_start_datetime
 
-    def delete_scaledobjects(self, scaledobjects, namespace=TARGET_NAMESPACE):
+    def delete_scaledobjects(self, active_scaledobjects, namespace=TARGET_NAMESPACE):
         deleted_scaledobjects = []
         scalers = self.customObjectApi.list_namespaced_custom_object(self.KEDA_API, self.KEDA_VERSION, namespace,
                                                                      'scaledobjects',
@@ -68,12 +70,12 @@ class Keda:
         items = dict(scalers)['items']
         exist_scalers = [s['metadata']['name'] for s in items]
 
-        for scaledobject in exist_scalers:
-            if scaledobject not in scaledobjects:
-                self.logger.info('scaleobject {} was deprecated. Deleting...'.format(scaledobject))
+        for aso in exist_scalers:
+            if aso not in active_scaledobjects:
+                self.logger.info('scaleobject {} was deprecated. Deleting...'.format(aso))
                 self.customObjectApi.delete_namespaced_custom_object(self.KEDA_API, self.KEDA_VERSION, namespace,
-                                                                     'scaledobjects', scaledobject)
-                self.logger.warning('Scaleobject {} deleted'.format(scaledobject))
-                deleted_scaledobjects.append(scaledobject)
+                                                                     'scaledobjects', aso)
+                self.logger.warning('Scaleobject {} deleted'.format(aso))
+                deleted_scaledobjects.append(aso)
 
         return deleted_scaledobjects
