@@ -1,5 +1,7 @@
 import os
 
+ENV_NAME = os.environ.get("ENV_NAME", "local")
+
 NODE_URL = os.environ.get("NODE_URL", "https://bsc-dataseed1.binance.org/")
 
 TARGET_NAME = os.environ.get("TARGET_NAME", "nginx")

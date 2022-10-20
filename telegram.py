@@ -3,7 +3,7 @@ import logging
 import os.path
 import requests
 from urllib.parse import urlencode
-from settings import TELEGRAM_TOKEN, CHATS_FILE_PATH
+from settings import TELEGRAM_TOKEN, CHATS_FILE_PATH, ENV_NAME
 
 
 class TelegramClientInitError(Exception):
@@ -53,6 +53,7 @@ class Telegram:
         return chat_ids
 
     def send_message(self, chat_id, text):
+        text = "{}: {}".format(ENV_NAME, text)
         return self.__make_request('sendMessage', chat_id=chat_id, text=text)
 
     def broadcast_messages(self, text):
