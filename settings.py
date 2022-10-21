@@ -14,8 +14,8 @@ K8S_REPLICAS_COUNT = int(os.environ.get("K8S_REPLICAS_COUNT", "5"))
 HOURS_BEFORE_SCALE = int(os.environ.get("HOURS_BEFORE_SCALE", "2"))
 
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
+TELEGRAM_CHAT_IDS = os.environ.get("TELEGRAM_CHAT_IDS", "").split(',')
 
 TIMEZONE = os.environ.get("TIMEZONE", "UTC")
-CHATS_FILE_PATH = os.environ.get("CHATS_FILE_PATH", "./data/chats.json")
 
 LOGGING_LEVEL = os.environ.get('LOGGING_LEVEL', 'INFO').upper()
