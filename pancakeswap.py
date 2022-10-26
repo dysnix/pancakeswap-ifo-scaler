@@ -9,7 +9,7 @@ from web3 import Web3
 
 class PancakeIFO:
     def __init__(self, node_url="https://bsc-dataseed1.binance.org/",
-                 github_info_url="https://raw.githubusercontent.com/pancakeswap/pancake-frontend/develop/src/config/constants/ifo.ts"):
+                 github_info_url="https://raw.githubusercontent.com/pancakeswap/pancake-frontend/develop/apps/web/src/config/constants/ifo.ts"):
         self.logger = logging.getLogger('pancakeswap')
 
         self.node_url = node_url
