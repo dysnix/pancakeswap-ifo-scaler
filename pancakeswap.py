@@ -5,11 +5,12 @@ import re
 import json5
 import requests
 from web3 import Web3
+from settings import HOURS_BEFORE_SCALE, GITHUB_URL
 
 
 class PancakeIFO:
     def __init__(self, node_url="https://bsc-dataseed1.binance.org/",
-                 github_info_url="https://raw.githubusercontent.com/pancakeswap/pancake-frontend/develop/apps/web/src/config/constants/ifo.ts"):
+                 github_info_url=GITHUB_URL):
         self.logger = logging.getLogger('pancakeswap')
 
         self.node_url = node_url
@@ -31,8 +32,26 @@ class PancakeIFO:
 
     def get_active_ifos(self):
         js_code = self.get_github_page()
-        ifos = self.parse_ifo_page(js_code)
-        return [ifo for ifo in ifos if ifo['isActive']]
+        now = datetime.datetime.now(tz=datetime.timezone.utc)
+
+        result = []
+        active_ifos = [ifo for ifo in self.parse_ifo_page(js_code) if ifo['isActive']]
+        for i in active_ifos:
+            start_datetime, end_datetime = self.get_ifo_period(i['address'])
+
+            self.logger.info(f"Found IFO {i['name']} from {start_datetime} to {end_datetime}")
+
+            if end_datetime <= now:
+                self.logger.info(f"IFO {i['name']} expired")
+                continue
+
+            result.append({
+                'name': i['name'],
+                'address': i['address'],
+                'start': start_datetime,
+                'end': end_datetime
+            })
+        return result
 
     def get_ifo_period(self, contact_address):
         contract = self.web3.eth.contract(address=contact_address, abi=self.abi)

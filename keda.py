@@ -1,12 +1,11 @@
-import logging
-
 import yaml
-from datetime import timedelta
+import logging
+import datetime
 from kubernetes import client, config
-from kubernetes.client import ApiException
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from settings import K8S_REPLICAS_COUNT, HOURS_BEFORE_SCALE, TARGET_NAME, TARGET_NAMESPACE, TIMEZONE, \
-    TARGET_API_VERSION, TARGET_KIND
+    TARGET_API_VERSION, TARGET_KIND, SCALEDOBJECT_NAME
 
 
 class Keda:
@@ -24,58 +23,48 @@ class Keda:
         self.k8s_client = client.ApiClient(configuration=self.config)
         self.customObjectApi = client.CustomObjectsApi(self.k8s_client)
 
+        self.jinja = Environment(
+            loader=FileSystemLoader("templates"),
+            autoescape=select_autoescape()
+        )
+
     def __datetime_to_cron(self, dt):
         return f"{dt.minute} {dt.hour} {dt.day} {dt.month} *"
 
-    def create_scaledobjects(self, contract_address, name, start_datetime, ifo_end_datetime,
-                             replicas=K8S_REPLICAS_COUNT,
-                             hours_before_scale=HOURS_BEFORE_SCALE,
-                             namespace=TARGET_NAMESPACE, target_name=TARGET_NAME,
-                             timezone=TIMEZONE):
+    def __render_scaledobject(self, **kwargs):
+        template = self.jinja.get_template("scaledobject.yaml.jinja2")
+        return template.render(**kwargs)
 
-        preparing_start_datetime = start_datetime - timedelta(hours=hours_before_scale)
+    def patch_scaledobject(self, ifos):
+        ifo_triggers = []
+        new_triggers = []
+        new_addresses = set()
 
-        scaledobject_name = 'ifo-{}-{}'.format(contract_address, name).lower()
+        current_resource = self.customObjectApi.get_namespaced_custom_object(self.KEDA_API, self.KEDA_VERSION,
+                                                                             TARGET_NAMESPACE,
+                                                                             'scaledobjects', SCALEDOBJECT_NAME)
+        currents_addresses = set(current_resource['metadata']['annotations'].
+                                 get('ifo-scaler.predictkube.com/contract-addresses', '').split(','))
 
-        with open('./keda/scaledobject.yaml', 'r') as tpl:
-            scaledobject_yml = tpl.read().format(contract_address=contract_address, name=scaledobject_name,
-                                                 namespace=namespace, target_name=target_name,
-                                                 target_api_version=TARGET_API_VERSION, target_kind=TARGET_KIND,
-                                                 timezone=timezone,
-                                                 start=self.__datetime_to_cron(preparing_start_datetime),
-                                                 end=self.__datetime_to_cron(ifo_end_datetime), replicas=replicas)
+        for i in ifos.copy():
+            i['start_cron'] = self.__datetime_to_cron(i['start'] - datetime.timedelta(hours=HOURS_BEFORE_SCALE))
+            i['end_cron'] = self.__datetime_to_cron(i['end'])
+            ifo_triggers.append(i)
+            new_addresses.add(i['address'])
+            if i['address'] not in currents_addresses:
+                new_triggers.append(i)
 
-        try:
-            self.customObjectApi.create_namespaced_custom_object(self.KEDA_API, self.KEDA_VERSION, namespace,
-                                                                 'scaledobjects',
-                                                                 yaml.load(scaledobject_yml, Loader=yaml.FullLoader))
-        except ApiException as e:
-            if e.status == 409:
-                self.logger.warning('ScaledObject {} already exist'.format(name))
-                return scaledobject_name, None
-            else:
-                self.logger.error('ScaledObject {} already can not be created: {}'.format(name, str(e)))
-                return scaledobject_name, None
+        scaledobject_yml = self.__render_scaledobject(scaledobject_name=SCALEDOBJECT_NAME, namespace=TARGET_NAMESPACE,
+                                                      target_name=TARGET_NAME,
+                                                      target_api_version=TARGET_API_VERSION, target_kind=TARGET_KIND,
+                                                      timezone=TIMEZONE,
+                                                      replicas=K8S_REPLICAS_COUNT,
+                                                      ifo_triggers=ifo_triggers,
+                                                      addresses=",".join(new_addresses))
 
-        self.logger.warning('ScaledObject {} created'.format(name))
+        self.customObjectApi.patch_namespaced_custom_object(self.KEDA_API, self.KEDA_VERSION,
+                                                            TARGET_NAMESPACE,
+                                                            'scaledobjects', SCALEDOBJECT_NAME,
+                                                            yaml.load(scaledobject_yml, Loader=yaml.FullLoader))
 
-        return scaledobject_name, preparing_start_datetime
-
-    def delete_scaledobjects(self, active_scaledobjects, namespace=TARGET_NAMESPACE):
-        deleted_scaledobjects = []
-        scalers = self.customObjectApi.list_namespaced_custom_object(self.KEDA_API, self.KEDA_VERSION, namespace,
-                                                                     'scaledobjects',
-                                                                     label_selector='app.kubernetes.io/managed-by=predictkube')
-
-        items = dict(scalers)['items']
-        exist_scalers = [s['metadata']['name'] for s in items]
-
-        for aso in exist_scalers:
-            if aso not in active_scaledobjects:
-                self.logger.info('scaleobject {} was deprecated. Deleting...'.format(aso))
-                self.customObjectApi.delete_namespaced_custom_object(self.KEDA_API, self.KEDA_VERSION, namespace,
-                                                                     'scaledobjects', aso)
-                self.logger.warning('Scaleobject {} deleted'.format(aso))
-                deleted_scaledobjects.append(aso)
-
-        return deleted_scaledobjects
+        return new_triggers

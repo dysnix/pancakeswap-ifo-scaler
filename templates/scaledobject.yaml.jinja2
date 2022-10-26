@@ -1,0 +1,52 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{scaledobject_name}}
+  namespace: {{namespace}}
+  labels:
+    app.kubernetes.io/managed-by: "predictkube"
+  annotations:
+    ifo-scaler.predictkube.com/contract-addresses: "{{addresses}}"
+spec:
+  maxReplicaCount: 30
+  minReplicaCount: 2
+  pollingInterval: 60
+  scaleTargetRef:
+    apiVersion: {{target_api_version}}
+    kind: {{target_kind}}
+    name: {{target_name}}
+  triggers:
+  - authenticationRef:
+      name: keda-trigger-auth-predictkube-secret
+    metadata:
+      historyTimeWindow: 7d
+      metricName: bsc_predicted_rps
+      predictHorizon: 2h
+      prometheusAddress: http://kube-prometheus-stack-prometheus.monitoring:9090
+      query: sum(irate(nginx_http_requests_total{cluster="", namespace=~"bsc"}[2m]))
+      queryStep: 2m
+      threshold: "1200"
+    type: predictkube
+  - type: cron
+    metadata:
+      # weekly manual scaling to force rpc node rotation
+      timezone: Europe/London  # The acceptable values would be a value from the IANA Time Zone Database.
+      start: 10 12 * * 2 # 12:10 on Tuesdays
+      end: 00 15 * * 2 # 15:00 on Tuesdays
+      desiredReplicas: "5"
+  - type: cron
+    metadata:
+      # scaling down to "force" scaledobject to switch from scaled up to normal right after previous
+      # scaleup
+      timezone: Europe/London  # The acceptable values would be a value from the IANA Time Zone Database.
+      start: 10 15 * * 2 # 15:10 on Tuesdays
+      end: 20 15 * * 2 # 15:20 on Tuesdays
+      desiredReplicas: "2"
+  {%- for t in ifo_triggers %}
+  - type: cron
+    metadata:
+      timezone: {{timezone}}
+      start: {{t.start_cron}}
+      end: {{t.end_cron}}
+      desiredReplicas: "{{replicas}}"
+  {%- endfor %}
