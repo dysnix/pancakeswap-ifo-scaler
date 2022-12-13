@@ -6,7 +6,7 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: "predictkube"
   annotations:
-    ifo-scaler.predictkube.com/contract-addresses: "{{addresses}}"
+    ifo-scaler.predictkube.com/ifos-hash: "{{ifos_hash}}"
 spec:
   maxReplicaCount: 30
   minReplicaCount: 2
@@ -45,6 +45,7 @@ spec:
   {%- for t in ifo_triggers %}
   - type: cron
     metadata:
+      # IFO {{t.name}} with contact address {{t.address}}
       timezone: {{timezone}}
       start: {{t.start_cron}}
       end: {{t.end_cron}}

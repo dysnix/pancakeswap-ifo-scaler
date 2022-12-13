@@ -2,7 +2,7 @@ import logging
 from keda import Keda
 from telegram import Telegram
 from pancakeswap import PancakeIFO
-from settings import LOGGING_LEVEL, NODE_URL
+from settings import LOGGING_LEVEL, NODE_URL, TIMEZONE
 
 logger = logging.getLogger('info-scaler')
 
@@ -18,4 +18,4 @@ if __name__ == '__main__':
 
     for i in new_ifos:
         t.broadcast_messages(f"Prepared to IFO {i['name']}: "
-                             f"Scaling start time: {i['start'].strftime('%c')}")
+                             f"Scaling start time: {i['start'].strftime('%c')}, timezone {TIMEZONE}")
