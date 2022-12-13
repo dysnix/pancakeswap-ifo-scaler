@@ -67,13 +67,13 @@ class Keda:
                                                                                  'scaledobjects', SCALEDOBJECT_NAME)
 
             current_checksum = current_resource['metadata']['annotations'].get('ifo-scaler.predictkube.com/checksum', '')
-            print('current checksum:', current_checksum)
-            print('new checksum:', checksum)
+            self.logger.debug('current checksum:', current_checksum)
+            self.logger.debug('new checksum:', checksum)
             if checksum == current_checksum:
-                logging.info('No changes needed. Exit.')
+                self.logger.info('No changes needed. Exit.')
                 return []
         except ApiException:
-            logging.warning('Scaledobject {}.{} not found. Creating...'.format(SCALEDOBJECT_NAME, TARGET_NAMESPACE))
+            self.logger.warning('Scaledobject {}.{} not found. Creating...'.format(SCALEDOBJECT_NAME, TARGET_NAMESPACE))
             pass
 
         for i in ifos.copy():
@@ -92,7 +92,7 @@ class Keda:
 
         if DRY_RUN:
             self.logger.info('DRY_RUN mode: scaledobject_yml content below:')
-            logging.info(scaledobject_yml)
+            self.logger.info(scaledobject_yml)
         else:
             if current_resource:
                 self.customObjectApi.patch_namespaced_custom_object(self.KEDA_API, self.KEDA_VERSION,
