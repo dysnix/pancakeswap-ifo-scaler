@@ -9,7 +9,8 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from kubernetes.client import ApiException
 
 from settings import K8S_REPLICAS_COUNT, HOURS_BEFORE_SCALE, TARGET_NAME, TARGET_NAMESPACE, TIMEZONE, \
-    TARGET_API_VERSION, TARGET_KIND, SCALEDOBJECT_NAME, DRY_RUN
+    TARGET_API_VERSION, TARGET_KIND, SCALEDOBJECT_NAME, DRY_RUN, MAX_REPLICA_COUNT, MIN_REPLICA_COUNT, POLLING_INTERVAL, \
+    IDLE_REPLICA_COUNT
 
 
 class Keda:
@@ -45,9 +46,15 @@ class Keda:
         for i in ifos:
             data_for_hash.append({'name': i['address'], 'start_block': i['start_block'], 'end_block': i['end_block']})
         text_data = json.dumps(data_for_hash, indent=4, sort_keys=True, default=str).encode("utf-8")
+
         m = hashlib.sha256()
         m.update(text_data)
         m.update(yaml.dump_all(triggers).encode('utf-8'))
+        for i in [TARGET_NAME, TARGET_NAMESPACE, TARGET_API_VERSION, TARGET_KIND, SCALEDOBJECT_NAME, K8S_REPLICAS_COUNT,
+                  HOURS_BEFORE_SCALE, MAX_REPLICA_COUNT, MIN_REPLICA_COUNT, POLLING_INTERVAL, IDLE_REPLICA_COUNT,
+                  TIMEZONE]:
+            m.update(str(i).encode('utf8'))
+
         return m.hexdigest()
 
     def get_triggers(self):
@@ -66,7 +73,8 @@ class Keda:
                                                                                  TARGET_NAMESPACE,
                                                                                  'scaledobjects', SCALEDOBJECT_NAME)
 
-            current_checksum = current_resource['metadata']['annotations'].get('ifo-scaler.predictkube.com/checksum', '')
+            current_checksum = current_resource['metadata']['annotations'].get('ifo-scaler.predictkube.com/checksum',
+                                                                               '')
             self.logger.debug('current checksum:', current_checksum)
             self.logger.debug('new checksum:', checksum)
             if checksum == current_checksum:
@@ -88,7 +96,11 @@ class Keda:
                                                       replicas=K8S_REPLICAS_COUNT,
                                                       triggers=yaml.safe_dump(triggers),
                                                       ifo_triggers=ifo_triggers,
-                                                      checksum=checksum)
+                                                      checksum=checksum,
+                                                      maxReplicaCount=MAX_REPLICA_COUNT,
+                                                      minReplicaCount=MIN_REPLICA_COUNT,
+                                                      pollingInterval=POLLING_INTERVAL,
+                                                      idleReplicaCount=IDLE_REPLICA_COUNT)
 
         if DRY_RUN:
             self.logger.info('DRY_RUN mode: scaledobject_yml content below:')

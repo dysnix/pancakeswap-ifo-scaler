@@ -17,6 +17,12 @@ K8S_REPLICAS_COUNT = int(os.environ.get("K8S_REPLICAS_COUNT", "5"))
 
 HOURS_BEFORE_SCALE = int(os.environ.get("HOURS_BEFORE_SCALE", "2"))
 
+
+MAX_REPLICA_COUNT = int(os.environ.get("MAX_REPLICA_COUNT", "30"))
+MIN_REPLICA_COUNT = int(os.environ.get("MIN_REPLICA_COUNT", "2"))
+POLLING_INTERVAL = int(os.environ.get("POLLING_INTERVAL", "60"))
+IDLE_REPLICA_COUNT = int(os.environ.get("IDLE_REPLICA_COUNT", "0"))
+
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_IDS = os.environ.get("TELEGRAM_CHAT_IDS", "").split(',')
 

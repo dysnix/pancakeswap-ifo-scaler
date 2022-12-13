@@ -8,9 +8,10 @@ metadata:
   annotations:
     ifo-scaler.predictkube.com/checksum: "{{checksum}}"
 spec:
-  maxReplicaCount: 30
-  minReplicaCount: 2
-  pollingInterval: 60
+  maxReplicaCount: {{ maxReplicaCount }}
+  minReplicaCount: {{ minReplicaCount }}
+  pollingInterval: {{ pollingInterval }}
+  idleReplicaCount: {{ idleReplicaCount }}
   scaleTargetRef:
     apiVersion: {{target_api_version}}
     kind: {{target_kind}}
