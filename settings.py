@@ -1,3 +1,4 @@
+import distutils.util
 import os
 
 ENV_NAME = os.environ.get("ENV_NAME", "local")
@@ -23,4 +24,4 @@ TIMEZONE = os.environ.get("TIMEZONE", "UTC")
 
 LOGGING_LEVEL = os.environ.get('LOGGING_LEVEL', 'INFO').upper()
 
-DRY_RUN = os.environ.get('DRY_RUN', 'True')
+DRY_RUN = bool(distutils.util.strtobool(os.environ.get('DRY_RUN', 'True')))

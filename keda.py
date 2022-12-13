@@ -40,18 +40,24 @@ class Keda:
         return template.render(**kwargs)
 
     def __get_hash_from_json(self, data):
-        text_data = json.dumps(data, indent=4, sort_keys=True, default=str).encode("utf-8")
+        data_for_hash = []
+        for i in data:
+            data_for_hash.append({'name': i['address'], 'start_block': i['start_block'], 'end_block': i['end_block']})
+        text_data = json.dumps(data_for_hash, indent=4, sort_keys=True, default=str).encode("utf-8")
         return hashlib.md5(text_data).hexdigest()
 
     def patch_scaledobject(self, ifos):
         ifo_triggers = []
+        current_resource = None
         ifos_hash = self.__get_hash_from_json(ifos)
 
         try:
             current_resource = self.customObjectApi.get_namespaced_custom_object(self.KEDA_API, self.KEDA_VERSION,
                                                                                  TARGET_NAMESPACE,
                                                                                  'scaledobjects', SCALEDOBJECT_NAME)
-            if ifos_hash != current_resource['metadata']['annotations'].get('ifo-scaler.predictkube.com/ifos-hash', ''):
+
+            if ifos_hash == current_resource['metadata']['annotations'].get('ifo-scaler.predictkube.com/ifos-hash', ''):
+                logging.info('IFOs not changed. Exit.')
                 return []
         except ApiException:
             logging.warning('Scaledobject {}.{} not found. Creating...'.format(SCALEDOBJECT_NAME, TARGET_NAMESPACE))
@@ -74,9 +80,16 @@ class Keda:
             self.logger.info('DRY_RUN mode: scaledobject_yml content below:')
             print(scaledobject_yml)
         else:
-            self.customObjectApi.patch_namespaced_custom_object(self.KEDA_API, self.KEDA_VERSION,
-                                                                TARGET_NAMESPACE,
-                                                                'scaledobjects', SCALEDOBJECT_NAME,
-                                                                yaml.load(scaledobject_yml, Loader=yaml.FullLoader))
+            if current_resource:
+                self.customObjectApi.patch_namespaced_custom_object(self.KEDA_API, self.KEDA_VERSION,
+                                                                    TARGET_NAMESPACE, 'scaledobjects',
+                                                                    SCALEDOBJECT_NAME,
+                                                                    yaml.load(scaledobject_yml,
+                                                                              Loader=yaml.FullLoader))
+            else:
+                self.customObjectApi.create_namespaced_custom_object(self.KEDA_API, self.KEDA_VERSION,
+                                                                     TARGET_NAMESPACE, 'scaledobjects',
+                                                                     yaml.load(scaledobject_yml,
+                                                                               Loader=yaml.FullLoader))
 
         return ifo_triggers

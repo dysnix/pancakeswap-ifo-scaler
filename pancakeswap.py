@@ -37,7 +37,7 @@ class PancakeIFO:
         result = []
         active_ifos = [ifo for ifo in self.parse_ifo_page(js_code) if ifo['isActive']]
         for i in active_ifos:
-            start_datetime, end_datetime = self.get_ifo_period(i['address'])
+            start_block, end_block, start_datetime, end_datetime = self.get_ifo_period(i['address'])
 
             self.logger.info(f"Found IFO {i['name']} from {start_datetime} to {end_datetime}")
 
@@ -48,6 +48,8 @@ class PancakeIFO:
             result.append({
                 'name': i['name'],
                 'address': i['address'],
+                'start_block': start_block,
+                'end_block': end_block,
                 'start': start_datetime,
                 'end': end_datetime
             })
@@ -65,4 +67,5 @@ class PancakeIFO:
         start_datetime = datetime.datetime.now() + datetime.timedelta(seconds=start_block_diff * 3)
         end_datetime = datetime.datetime.now() + datetime.timedelta(seconds=end_block_diff * 3)
 
-        return start_datetime.astimezone(datetime.timezone.utc), end_datetime.astimezone(datetime.timezone.utc)
+        return start_block, end_block, start_datetime.astimezone(datetime.timezone.utc), end_datetime.astimezone(
+            datetime.timezone.utc)
