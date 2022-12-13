@@ -54,7 +54,7 @@ class PancakeIFO:
         return result
 
     def get_ifo_period(self, contact_address):
-        contract = self.web3.eth.contract(address=contact_address, abi=self.abi)
+        contract = self.web3.eth.contract(address=Web3.toChecksumAddress(contact_address), abi=self.abi)
 
         start_block = contract.functions.startBlock().call()
         end_block = contract.functions.endBlock().call()

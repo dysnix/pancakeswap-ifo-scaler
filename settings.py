@@ -22,3 +22,5 @@ TELEGRAM_CHAT_IDS = os.environ.get("TELEGRAM_CHAT_IDS", "").split(',')
 TIMEZONE = os.environ.get("TIMEZONE", "UTC")
 
 LOGGING_LEVEL = os.environ.get('LOGGING_LEVEL', 'INFO').upper()
+
+DRY_RUN = os.environ.get('DRY_RUN', 'True')

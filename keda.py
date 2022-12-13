@@ -5,7 +5,7 @@ from kubernetes import client, config
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from settings import K8S_REPLICAS_COUNT, HOURS_BEFORE_SCALE, TARGET_NAME, TARGET_NAMESPACE, TIMEZONE, \
-    TARGET_API_VERSION, TARGET_KIND, SCALEDOBJECT_NAME
+    TARGET_API_VERSION, TARGET_KIND, SCALEDOBJECT_NAME, DRY_RUN
 
 
 class Keda:
@@ -54,6 +54,7 @@ class Keda:
             if i['address'] not in currents_addresses:
                 new_triggers.append(i)
 
+
         scaledobject_yml = self.__render_scaledobject(scaledobject_name=SCALEDOBJECT_NAME, namespace=TARGET_NAMESPACE,
                                                       target_name=TARGET_NAME,
                                                       target_api_version=TARGET_API_VERSION, target_kind=TARGET_KIND,
@@ -62,9 +63,13 @@ class Keda:
                                                       ifo_triggers=ifo_triggers,
                                                       addresses=",".join(new_addresses))
 
-        self.customObjectApi.patch_namespaced_custom_object(self.KEDA_API, self.KEDA_VERSION,
-                                                            TARGET_NAMESPACE,
-                                                            'scaledobjects', SCALEDOBJECT_NAME,
-                                                            yaml.load(scaledobject_yml, Loader=yaml.FullLoader))
+        if DRY_RUN:
+            self.logger.info('DRY_RUN mode: scaledobject_yml conftent below:')
+            print(scaledobject_yml)
+        else:
+            self.customObjectApi.patch_namespaced_custom_object(self.KEDA_API, self.KEDA_VERSION,
+                                                                TARGET_NAMESPACE,
+                                                                'scaledobjects', SCALEDOBJECT_NAME,
+                                                                yaml.load(scaledobject_yml, Loader=yaml.FullLoader))
 
         return new_triggers
