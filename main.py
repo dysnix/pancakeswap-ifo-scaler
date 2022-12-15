@@ -17,5 +17,8 @@ if __name__ == '__main__':
     new_ifos = k.patch_scaledobject(iofs)
 
     for i in new_ifos:
-        t.broadcast_messages(f"Prepared to IFO {i['name']}: "
-                             f"Scaling start time: {i['start_ifo'].strftime('%c')}, timezone {TIMEZONE}")
+        t.broadcast_messages(f"Prepared to IFO {i['name']}:\n"
+                             f"Start IFO: {i['start'].strftime('%c')}\n"
+                             f"End IFO: {i['end'].strftime('%c')}\n"
+                             f"Scaling from: {i['start_scaling'].strftime('%c')} to {i['end_scaling'].strftime('%c')}\n"
+                             f"Timezone: {TIMEZONE}")
