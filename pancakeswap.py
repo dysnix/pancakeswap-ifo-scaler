@@ -5,10 +5,12 @@ import re
 import json5
 import requests
 from web3 import Web3
-from settings import HOURS_BEFORE_SCALE, GITHUB_URL
+from settings import GITHUB_URL
 
 
 class PancakeIFO:
+    SECONDS_PER_BLOCK = 3
+
     def __init__(self, node_url="https://bsc-dataseed1.binance.org/",
                  github_info_url=GITHUB_URL):
         self.logger = logging.getLogger('pancakeswap')
@@ -64,8 +66,8 @@ class PancakeIFO:
         start_block_diff = start_block - self.web3.eth.blockNumber
         end_block_diff = end_block - self.web3.eth.blockNumber
 
-        start_datetime = datetime.datetime.now() + datetime.timedelta(seconds=start_block_diff * 3)
-        end_datetime = datetime.datetime.now() + datetime.timedelta(seconds=end_block_diff * 3)
+        start_datetime = datetime.datetime.now() + datetime.timedelta(seconds=start_block_diff * self.SECONDS_PER_BLOCK)
+        end_datetime = datetime.datetime.now() + datetime.timedelta(seconds=end_block_diff * self.SECONDS_PER_BLOCK)
 
         return start_block, end_block, start_datetime.astimezone(datetime.timezone.utc), end_datetime.astimezone(
             datetime.timezone.utc)

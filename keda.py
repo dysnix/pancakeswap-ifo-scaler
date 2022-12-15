@@ -10,7 +10,7 @@ from kubernetes.client import ApiException
 
 from settings import K8S_REPLICAS_COUNT, HOURS_BEFORE_SCALE, TARGET_NAME, TARGET_NAMESPACE, TIMEZONE, \
     TARGET_API_VERSION, TARGET_KIND, SCALEDOBJECT_NAME, DRY_RUN, MAX_REPLICA_COUNT, MIN_REPLICA_COUNT, POLLING_INTERVAL, \
-    IDLE_REPLICA_COUNT
+    IDLE_REPLICA_COUNT, HOURS_AFTER_SCALE
 
 
 class Keda:
@@ -41,7 +41,7 @@ class Keda:
         template = self.jinja.get_template("scaledobject.yaml.jinja2")
         return template.render(**kwargs)
 
-    def __get_hash_from_json(self, ifos, triggers):
+    def __get_checksum(self, ifos, triggers):
         data_for_hash = []
         for i in ifos:
             data_for_hash.append({'name': i['address'], 'start_block': i['start_block'], 'end_block': i['end_block']})
@@ -51,8 +51,8 @@ class Keda:
         m.update(text_data)
         m.update(yaml.dump_all(triggers).encode('utf-8'))
         for i in [TARGET_NAME, TARGET_NAMESPACE, TARGET_API_VERSION, TARGET_KIND, SCALEDOBJECT_NAME, K8S_REPLICAS_COUNT,
-                  HOURS_BEFORE_SCALE, MAX_REPLICA_COUNT, MIN_REPLICA_COUNT, POLLING_INTERVAL, IDLE_REPLICA_COUNT,
-                  TIMEZONE]:
+                  HOURS_BEFORE_SCALE, HOURS_AFTER_SCALE, MAX_REPLICA_COUNT, MIN_REPLICA_COUNT, POLLING_INTERVAL,
+                  IDLE_REPLICA_COUNT, TIMEZONE]:
             m.update(str(i).encode('utf8'))
 
         return m.hexdigest()
@@ -66,7 +66,7 @@ class Keda:
         ifo_triggers = []
         current_resource = None
         triggers = self.get_triggers()
-        checksum = self.__get_hash_from_json(ifos, triggers)
+        checksum = self.__get_checksum(ifos, triggers)
 
         try:
             current_resource = self.customObjectApi.get_namespaced_custom_object(self.KEDA_API, self.KEDA_VERSION,
@@ -86,7 +86,7 @@ class Keda:
 
         for i in ifos.copy():
             i['start_cron'] = self.__datetime_to_cron(i['start'] - datetime.timedelta(hours=HOURS_BEFORE_SCALE))
-            i['end_cron'] = self.__datetime_to_cron(i['end'])
+            i['end_cron'] = self.__datetime_to_cron(i['end'] + datetime.timedelta(hours=HOURS_AFTER_SCALE))
             ifo_triggers.append(i)
 
         scaledobject_yml = self.__render_scaledobject(scaledobject_name=SCALEDOBJECT_NAME, namespace=TARGET_NAMESPACE,
