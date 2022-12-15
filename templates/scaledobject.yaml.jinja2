@@ -6,7 +6,7 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: "predictkube"
   annotations:
-    ifo-scaler.predictkube.com/checksum: "{{checksum}}"
+    ifo-scaler.predictkube.com/ifos: "{{ifos_info}}"
 spec:
   maxReplicaCount: {{ maxReplicaCount }}
   minReplicaCount: {{ minReplicaCount }}

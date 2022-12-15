@@ -1,6 +1,9 @@
+import base64
 import hashlib
 import json
+from json import JSONDecodeError
 
+import dateutil.parser
 import yaml
 import logging
 import datetime
@@ -10,7 +13,16 @@ from kubernetes.client import ApiException
 
 from settings import K8S_REPLICAS_COUNT, HOURS_BEFORE_SCALE, TARGET_NAME, TARGET_NAMESPACE, TIMEZONE, \
     TARGET_API_VERSION, TARGET_KIND, SCALEDOBJECT_NAME, DRY_RUN, MAX_REPLICA_COUNT, MIN_REPLICA_COUNT, POLLING_INTERVAL, \
-    IDLE_REPLICA_COUNT, HOURS_AFTER_SCALE
+    IDLE_REPLICA_COUNT, HOURS_AFTER_SCALE, AVAILABLE_CLEARANCE_MINUTES
+
+
+def datetime_parser(json_dict):
+    for (key, value) in json_dict.items():
+        try:
+            json_dict[key] = dateutil.parser.parse(value)
+        except (ValueError, AttributeError, TypeError):
+            pass
+    return json_dict
 
 
 class Keda:
@@ -41,22 +53,6 @@ class Keda:
         template = self.jinja.get_template("scaledobject.yaml.jinja2")
         return template.render(**kwargs)
 
-    def __get_checksum(self, ifos, triggers):
-        data_for_hash = []
-        for i in ifos:
-            data_for_hash.append({'name': i['address'], 'start_block': i['start_block'], 'end_block': i['end_block']})
-        text_data = json.dumps(data_for_hash, indent=4, sort_keys=True, default=str).encode("utf-8")
-
-        m = hashlib.sha256()
-        m.update(text_data)
-        m.update(yaml.dump_all(triggers).encode('utf-8'))
-        for i in [TARGET_NAME, TARGET_NAMESPACE, TARGET_API_VERSION, TARGET_KIND, SCALEDOBJECT_NAME, K8S_REPLICAS_COUNT,
-                  HOURS_BEFORE_SCALE, HOURS_AFTER_SCALE, MAX_REPLICA_COUNT, MIN_REPLICA_COUNT, POLLING_INTERVAL,
-                  IDLE_REPLICA_COUNT, TIMEZONE]:
-            m.update(str(i).encode('utf8'))
-
-        return m.hexdigest()
-
     def get_triggers(self):
         with open(self.TRIGGERS_CONF_PATH, 'r') as f:
             data = yaml.safe_load(f)
@@ -66,29 +62,45 @@ class Keda:
         ifo_triggers = []
         current_resource = None
         triggers = self.get_triggers()
-        checksum = self.__get_checksum(ifos, triggers)
 
         try:
             current_resource = self.customObjectApi.get_namespaced_custom_object(self.KEDA_API, self.KEDA_VERSION,
                                                                                  TARGET_NAMESPACE,
                                                                                  'scaledobjects', SCALEDOBJECT_NAME)
 
-            current_checksum = current_resource['metadata']['annotations'].get('ifo-scaler.predictkube.com/checksum',
-                                                                               '')
-            self.logger.debug('current checksum:', current_checksum)
-            self.logger.debug('new checksum:', checksum)
-            if checksum == current_checksum:
+            previous_ifos_data = current_resource['metadata']['annotations'].get('ifo-scaler.predictkube.com/ifos', '')
+            decoded_ifos_data = base64.b64decode(previous_ifos_data).decode('utf8')
+            previous_ifos = json.loads(decoded_ifos_data, object_hook=datetime_parser)
+            previous_data = dict([(i['address'], i) for i in previous_ifos])
+
+            is_update_required = False
+            for ifo in ifos:
+                if (ifo['start'] - previous_data[ifo['address']]['start']) > datetime.timedelta(
+                        minutes=AVAILABLE_CLEARANCE_MINUTES):
+                    is_update_required = True
+                    self.logger.info('Start date changed for IFO {}'.format(ifo['name']))
+                if (ifo['end'] - previous_data[ifo['address']]['end']) > datetime.timedelta(
+                        minutes=AVAILABLE_CLEARANCE_MINUTES):
+                    is_update_required = True
+                    self.logger.info('End date changed for IFO {}'.format(ifo['name']))
+
+            if not is_update_required:
                 self.logger.info('No changes needed. Exit.')
                 return []
         except ApiException:
             self.logger.warning('Scaledobject {}.{} not found. Creating...'.format(SCALEDOBJECT_NAME, TARGET_NAMESPACE))
-            pass
+        except JSONDecodeError:
+            self.logger.warning('Scaledobject {}.{} have not ifos metadata found. Pathing...'.format(SCALEDOBJECT_NAME,
+                                                                                                     TARGET_NAMESPACE))
 
         for i in ifos.copy():
-            i['start_cron'] = self.__datetime_to_cron(i['start'] - datetime.timedelta(hours=HOURS_BEFORE_SCALE))
-            i['end_cron'] = self.__datetime_to_cron(i['end'] + datetime.timedelta(hours=HOURS_AFTER_SCALE))
+            i['start_ifo'] = i['start'] - datetime.timedelta(hours=HOURS_BEFORE_SCALE)
+            i['end_ifo'] = i['end'] + datetime.timedelta(hours=HOURS_AFTER_SCALE)
+            i['start_cron'] = self.__datetime_to_cron(i['start_ifo'])
+            i['end_cron'] = self.__datetime_to_cron(i['end_ifo'])
             ifo_triggers.append(i)
 
+        ifos_info = base64.b64encode(json.dumps(ifos, default=str).encode('utf8')).decode('utf8')
         scaledobject_yml = self.__render_scaledobject(scaledobject_name=SCALEDOBJECT_NAME, namespace=TARGET_NAMESPACE,
                                                       target_name=TARGET_NAME,
                                                       target_api_version=TARGET_API_VERSION, target_kind=TARGET_KIND,
@@ -96,7 +108,7 @@ class Keda:
                                                       replicas=K8S_REPLICAS_COUNT,
                                                       triggers=yaml.safe_dump(triggers),
                                                       ifo_triggers=ifo_triggers,
-                                                      checksum=checksum,
+                                                      ifos_info=ifos_info,
                                                       maxReplicaCount=MAX_REPLICA_COUNT,
                                                       minReplicaCount=MIN_REPLICA_COUNT,
                                                       pollingInterval=POLLING_INTERVAL,

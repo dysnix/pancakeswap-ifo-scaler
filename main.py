@@ -18,4 +18,4 @@ if __name__ == '__main__':
 
     for i in new_ifos:
         t.broadcast_messages(f"Prepared to IFO {i['name']}: "
-                             f"Scaling start time: {i['start'].strftime('%c')}, timezone {TIMEZONE}")
+                             f"Scaling start time: {i['start_ifo'].strftime('%c')}, timezone {TIMEZONE}")

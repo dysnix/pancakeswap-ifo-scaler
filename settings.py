@@ -15,9 +15,10 @@ SCALEDOBJECT_NAME = os.environ.get("SCALEDOBJECT_NAME", "bsc-so")
 
 K8S_REPLICAS_COUNT = int(os.environ.get("K8S_REPLICAS_COUNT", "5"))
 
-HOURS_BEFORE_SCALE = int(os.environ.get("HOURS_BEFORE_SCALE", "2"))
+HOURS_BEFORE_SCALE = int(os.environ.get("HOURS_BEFORE_SCALE", "3"))
 HOURS_AFTER_SCALE = int(os.environ.get("HOURS_AFTER_SCALE", "2"))
 
+AVAILABLE_CLEARANCE_MINUTES = int(os.environ.get("AVAILABLE_CLEARANCE_MINUTES", "20"))
 
 MAX_REPLICA_COUNT = int(os.environ.get("MAX_REPLICA_COUNT", "30"))
 MIN_REPLICA_COUNT = int(os.environ.get("MIN_REPLICA_COUNT", "2"))
