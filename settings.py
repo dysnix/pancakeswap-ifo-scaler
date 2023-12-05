@@ -5,7 +5,7 @@ ENV_NAME = os.environ.get("ENV_NAME", "local")
 
 NODE_URL = os.environ.get("NODE_URL", "https://bsc-dataseed1.binance.org/")
 GITHUB_URL = os.environ.get("GITHUB_URL",
-                            "https://raw.githubusercontent.com/pancakeswap/pancake-frontend/develop/apps/web/src/config/constants/ifo.ts")
+                            "https://raw.githubusercontent.com/pancakeswap/pancake-frontend/develop/packages/ifos/src/constants/ifos/bsc.ts")
 
 TARGET_NAME = os.environ.get("TARGET_NAME", "nginx")
 TARGET_NAMESPACE = os.environ.get("TARGET_NAMESPACE", "default")

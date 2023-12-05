@@ -26,7 +26,7 @@ class PancakeIFO:
         return requests.get(self.github_info_url).text
 
     def parse_ifo_page(self, data):
-        js_obj = '[{}]'.format(re.search(r'Ifo\[\] = \[((?:\n.+)+)\n]', data, re.MULTILINE).group(1))
+        js_obj = '[{}]'.format(re.search(r'BaseIfoConfig\[\] = \[((?:\n.+)+)\n]', data, re.MULTILINE).group(1))
         js_obj = re.sub(r'bscTokens\.\w+', '""', js_obj)
         js_obj = re.sub(r'cakeBnbLpToken', '""', js_obj)
         js_obj = re.sub(r'`', '"', js_obj)
